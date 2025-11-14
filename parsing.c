@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
     sexpr          : '(' <expr>* ')' ;                                    \
     expr           : <number> | '(' <operator> <expr>+ ')' ;              \
     lispy          : /^/ <operator> <expr>+ /$/ ;", 
-    Number, Symbol, Expr, Lispy);
+    Number, Symbol, Sexpr, Expr, Lispy);
+    //              how sexy
 
     puts("Mylisp Version 0.0.0.0.1");
     puts("Press Ctrl+C to Exit\n");
@@ -53,15 +54,14 @@ int main(int argc, char *argv[])
             continue;
         }
         
-        
-        lval result = eval(r.output);
-        lval_print(result);
-        mpc_ast_delete(r.output);
+        lval* x = lval_read(r.output);
+        lval_println(x);
+        lval_del(x);
         
         free(input);
     }
 
-    mpc_cleanup(4, Number, Symbol, Expr, Lispy);
+    mpc_cleanup(4, Number, Symbol, Sexpr, Expr, Lispy);
     return 0;
 
 

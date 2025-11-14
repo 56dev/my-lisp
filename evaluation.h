@@ -13,11 +13,6 @@ typedef struct lval
     struct lval** cell;
 } lval;
 
-// lval eval_op(lval x, char* op, lval y);
-// lval eval(mpc_ast_t* t);
-// lval lval_num(long x);
-// lval lval_err(int x);
-// void lval_print(lval v);
 
 lval* lval_num(long x);
 lval* lval_err(char* message);
@@ -29,6 +24,7 @@ lval* lval_add(lval* v, lval* x);
 void lval_expr_print(lval* v, char open, char close);
 void lval_print(lval* v);
 void lval_println(lval* v);
+void lval_del(lval* v);
 
 
 enum {LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR};
