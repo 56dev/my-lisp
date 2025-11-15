@@ -25,6 +25,12 @@ void lval_expr_print(lval* v, char open, char close);
 void lval_print(lval* v);
 void lval_println(lval* v);
 void lval_del(lval* v);
+lval* lval_pop(lval* v, int idx);
+lval* lval_take(lval* v, int idx);
+lval* builtin_op(lval* a, char* op);
+lval* lval_eval(lval* v);
+lval* lval_eval_sexpr(lval* v);
+
 
 
 enum {LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR};

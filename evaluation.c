@@ -56,7 +56,7 @@ lval* lval_read(mpc_ast_t* t)
     {
         if(strcmp(t->children[i]->contents, "(") == 0) { continue; }
         if(strcmp(t->children[i]->contents, ")") == 0) { continue; }
-        if(strcmp(t->children[i]->contents, "regex") == 0) { continue; }
+        if(strcmp(t->children[i]->tag, "regex") == 0) { continue; }
 
         x = lval_add(x, lval_read(t->children[i]));
     }
@@ -122,5 +122,102 @@ void lval_del(lval* v)
     }
 
     free(v);
+
+}
+
+lval* lval_pop(lval* v, int idx)
+{
+    lval* x = v->cell[idx];
+
+    memmove(&v->cell[idx], &v->cell[idx + 1], sizeof(lval*) * (v->count - idx - 1));
+
+    v->count--;
+
+    v->cell = realloc(v->cell, sizeof(lval*) * v->count);
+    return x;
+}
+
+lval* lval_take(lval* v, int idx)
+{
+    lval* x = lval_pop(v, idx);
+    lval_del(v);
+    return x;
+}
+
+lval* builtin_op(lval* a, char* op)
+{
+    for(int i = 0; i < a->count; i++)
+    {
+        if(a->cell[i]->type != LVAL_NUM)
+        {
+            lval_del(a);
+            return lval_err("Cannot operate on non-numbers!");
+        }
+    }
+
+    lval* x = lval_pop(a, 0);
+    if((strcmp(op, "-") == 0) && a->count == 0)
+    {
+        x->num = -(x->num);
+    }
+
+    while(a->count > 0)
+    {
+        lval* y = lval_pop(a, 0);
+        if(strcmp(op, "+") == 0) x->num += y->num;
+        else if(strcmp(op, "-") == 0) x->num -= y->num;
+        else if(strcmp(op, "*") == 0) x->num *= y->num;
+        else if(strcmp(op, "/") == 0)
+        {
+            if(y->num == 0)
+            {
+                lval_del(x);
+                lval_del(y);
+                x = lval_err("Division by Zero!"); break;
+            }
+            x->num /= y->num;
+        }
+
+        lval_del(y);
+    }
+
+    lval_del(a);
+    return x;
+}
+
+lval* lval_eval(lval* v)
+{
+    if(v->type == LVAL_SEXPR) return lval_eval_sexpr(v);
+    return v;
+}
+
+lval* lval_eval_sexpr(lval* v)
+{
+    for(int i = 0; i < v->count; ++i)
+    {
+        v->cell[i] = lval_eval(v->cell[i]);
+    }
+
+    for(int i = 0; i < v->count; ++i)
+    {
+        if(v->cell[i]->type == LVAL_ERR)
+        {
+            return lval_take(v, i);
+        }
+    }
+    if(v->count == 0) { return v; } //()
+    if(v->count == 1) {return lval_take(v, 0);} // (5), (+)
+
+    lval* first = lval_pop(v, 0);
+    if(first->type != LVAL_SYM)
+    {
+        lval_del(first);
+        lval_del(v);
+        return lval_err("S-expression does not start with symbol!");
+    }
+
+    lval* result = builtin_op(v, first->sym);
+    lval_del(first);
+    return result;
 
 }
